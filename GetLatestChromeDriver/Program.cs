@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -7,7 +6,6 @@ using System.Linq;
 using System.Management;
 using System.Net.Http;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -19,7 +17,10 @@ namespace GetLatestChromeDriver
     internal class Program
     {
         private static string? _applicationPath;
-        private static readonly HttpClient HttpClient = new();
+        private static readonly HttpClient HttpClient = new HttpClient()
+        {
+            Timeout = TimeSpan.FromMinutes(5) // Set a reasonable timeout
+        };
 
         private static async Task Main(string[] args)
         {
@@ -32,23 +33,31 @@ namespace GetLatestChromeDriver
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
+                if (args.Contains("--verbose"))
+                {
+                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                }
                 Environment.Exit(1);
+            }
+            finally
+            {
+                HttpClient?.Dispose();
             }
         }
 
-        public static void KillProcess(int pid)
+        public static async Task KillProcessAsync(int pid)
         {
-            KillProcessAndChildren(pid);
+            await KillProcessAndChildrenAsync(pid);
         }
 
-        public static void KillProcess(string processName)
+        public static async Task KillProcessAsync(string processName)
         {
             var procs = Process.GetProcessesByName(processName);
             foreach (var proc in procs)
-                KillProcessAndChildren(proc.Id);
+                await KillProcessAndChildrenAsync(proc.Id);
         }
 
-        private static void KillProcessAndChildren(int parentProcessId)
+        private static async Task KillProcessAndChildrenAsync(int parentProcessId)
         {
             if (parentProcessId == 0) return;
 
@@ -63,8 +72,8 @@ namespace GetLatestChromeDriver
                 foreach (var o in moc)
                 {
                     var mo = (ManagementObject)o;
-                    KillProcessAndChildren(Convert.ToInt32(mo["ProcessID"]));
-                    Thread.Sleep(500);
+                    await KillProcessAndChildrenAsync(Convert.ToInt32(mo["ProcessID"]));
+                    await Task.Delay(500);
                 }
             }
             catch (Exception ex)
@@ -76,27 +85,33 @@ namespace GetLatestChromeDriver
             {
                 var proc = Process.GetProcessById(parentProcessId);
                 proc.Kill();
-                Thread.Sleep(500);
+                await Task.Delay(500);
             }
             catch (ArgumentException)
             {
                 // Process already exited.
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not kill process {parentProcessId}: {ex.Message}");
+            }
         }
 
-        private static void KillLockedProcess(string lockedFilePath)
+        private static async Task KillLockedProcessAsync(string lockedFilePath)
         {
             if (_applicationPath == null) return;
 
             try
             {
-                ZipFile.ExtractToDirectory($"{_applicationPath}\\Handle.zip", $"{_applicationPath}\\");
+                var handleZipPath = Path.Combine(_applicationPath, "Handle.zip");
+                ZipFile.ExtractToDirectory(handleZipPath, _applicationPath);
 
-                var tool = new Process();
+                using var tool = new Process();
                 tool.StartInfo.FileName = "handle.exe";
-                tool.StartInfo.Arguments = lockedFilePath + " /accepteula";
+                tool.StartInfo.Arguments = $"{lockedFilePath} /accepteula";
                 tool.StartInfo.UseShellExecute = false;
                 tool.StartInfo.RedirectStandardOutput = true;
+                tool.StartInfo.WorkingDirectory = _applicationPath;
                 tool.Start();
                 tool.WaitForExit();
                 var outputTool = tool.StandardOutput.ReadToEnd();
@@ -104,8 +119,8 @@ namespace GetLatestChromeDriver
                 var matchPattern = @"(?<=\s+pid:\s+)\b(\d+)\b(?=\s+)";
                 foreach (Match match in Regex.Matches(outputTool, matchPattern))
                 {
-                    var proc = Process.GetProcessById(int.Parse(match.Value)).Id;
-                    KillProcess(proc);
+                    var pid = int.Parse(match.Value);
+                    await KillProcessAsync(pid);
                 }
             }
             catch (Exception ex)
@@ -143,9 +158,14 @@ namespace GetLatestChromeDriver
                 {
                     File.Delete(chromeDriverPath);
                 }
-                catch
+                catch (UnauthorizedAccessException)
                 {
-                    KillLockedProcess(chromeDriverPath);
+                    await KillLockedProcessAsync(chromeDriverPath);
+                    File.Delete(chromeDriverPath);
+                }
+                catch (IOException)
+                {
+                    await KillLockedProcessAsync(chromeDriverPath);
                     File.Delete(chromeDriverPath);
                 }
             }

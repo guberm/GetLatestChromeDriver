@@ -5,6 +5,19 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AssemblyTitle>ChromeDriver Updater</AssemblyTitle>
+    <AssemblyDescription>Automatically downloads and installs the latest compatible ChromeDriver version for your installed Google Chrome browser.</AssemblyDescription>
+    <AssemblyProduct>GetLatestChromeDriver</AssemblyProduct>
+    <AssemblyCompany>guberm</AssemblyCompany>
+    <Copyright>Copyright © 2025 guberm</Copyright>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <RepositoryUrl>https://github.com/guberm/GetLatestChromeDriver</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/guberm/GetLatestChromeDriver</PackageProjectUrl>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,57 +1,68 @@
 # ChromeDriver Updater
 
-A .NET 8 console application that automatically downloads and installs the latest compatible ChromeDriver version for your installed Google Chrome browser.
+[![.NET](https://img.shields.io/badge/.NET-8.0-purple)](https://dotnet.microsoft.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CodeQL](https://github.com/guberm/GetLatestChromeDriver/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/guberm/GetLatestChromeDriver/actions/workflows/codeql-analysis.yml)
+
+A robust .NET 8 console application that automatically downloads and installs the latest compatible ChromeDriver version for your installed Google Chrome browser. Perfect for Selenium automation projects and CI/CD pipelines.
 
 ## 🚀 Features
 
-- **Automatic Chrome Version Detection**: Detects your installed Chrome version from Windows Registry or file system
-- **Compatible ChromeDriver Download**: Uses the official Chrome for Testing API to find the correct ChromeDriver version
-- **Smart Process Management**: Automatically terminates any running ChromeDriver processes that might lock the executable
-- **Error Handling**: Comprehensive error handling with informative messages
-- **Modern C# Patterns**: Built with .NET 8, async/await, and modern C# best practices
+- **🔍 Automatic Chrome Version Detection**: Detects your installed Chrome version from Windows Registry or file system
+- **📦 Compatible ChromeDriver Download**: Uses the official Chrome for Testing API to find the correct ChromeDriver version
+- **⚡ Smart Process Management**: Automatically terminates any running ChromeDriver processes that might lock the executable
+- **🛡️ Robust Error Handling**: Comprehensive error handling with informative messages and optional verbose output
+- **🔄 Modern C# Patterns**: Built with .NET 8, async/await, and modern C# best practices
+- **⏱️ Timeout Protection**: HTTP requests include timeout protection to prevent hanging
+- **📝 Detailed Logging**: Clear progress information and debugging capabilities
 
 ## 📋 Prerequisites
 
-- Windows operating system
-- .NET 8.0 Runtime or SDK
-- Google Chrome installed
+- **Operating System**: Windows (Windows 10/11 recommended)
+- **Runtime**: .NET 8.0 Runtime or SDK ([Download here](https://dotnet.microsoft.com/download/dotnet/8.0))
+- **Browser**: Google Chrome installed on your system
+- **Permissions**: Administrative privileges may be required for process management
 
 ## 🛠️ Installation
 
-### Option 1: Download Release
-1. Download the latest release from the [Releases](../../releases) page
-2. Extract the files to your desired location
-3. Run `GetLatestChromeDriver.exe`
+### Option 1: Download Release (Recommended)
+1. Go to the [Releases](../../releases) page
+2. Download the latest `GetLatestChromeDriver.zip`
+3. Extract to your desired location
+4. Run `GetLatestChromeDriver.exe`
 
 ### Option 2: Build from Source
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/guberm/GetLatestChromeDriver.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd GetLatestChromeDriver
-   ```
-3. Build the project:
-   ```bash
-   dotnet build --configuration Release
-   ```
-4. Run the application:
-   ```bash
-   dotnet run --project GetLatestChromeDriver
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/guberm/GetLatestChromeDriver.git
+
+# Navigate to the project directory
+cd GetLatestChromeDriver
+
+# Build the project
+dotnet build --configuration Release
+
+# Run the application
+dotnet run --project GetLatestChromeDriver
+```
+
+### Option 3: Self-Contained Deployment
+```bash
+# Build a self-contained executable (no .NET runtime required on target machine)
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+```
 
 ## 🎯 Usage
 
-Simply run the executable, and it will:
-
-1. Detect your installed Chrome version
-2. Find the compatible ChromeDriver version
-3. Download and extract the ChromeDriver to the application directory
-4. Clean up temporary files
-
+### Basic Usage
 ```bash
 GetLatestChromeDriver.exe
+```
+
+### Advanced Usage
+```bash
+# Run with verbose error output
+GetLatestChromeDriver.exe --verbose
 ```
 
 ### Sample Output
@@ -64,84 +75,159 @@ ChromeDriver extraction completed.
 ChromeDriver updated successfully!
 ```
 
+### Integration in Selenium Projects
+```csharp
+// Before running your Selenium tests, ensure ChromeDriver is updated
+Process.Start("GetLatestChromeDriver.exe")?.WaitForExit();
+
+// Now use ChromeDriver in your Selenium code
+var driver = new ChromeDriver("path/to/chromedriver/directory");
+```
+
 ## 🔧 How It Works
 
-1. **Chrome Version Detection**: 
-   - First tries Windows Registry (`HKEY_CURRENT_USER` and `HKEY_LOCAL_MACHINE`)
-   - Falls back to reading version from Chrome executable files
+### 1. Chrome Version Detection
+The application uses a multi-step approach to detect your Chrome version:
+- **Primary**: Windows Registry lookup (`HKEY_CURRENT_USER` and `HKEY_LOCAL_MACHINE`)
+- **Fallback**: File version information from Chrome executable in standard installation paths
 
-2. **ChromeDriver Version Lookup**:
-   - Uses the official [Chrome for Testing API](https://googlechromelabs.github.io/chrome-for-testing/)
-   - Finds the latest ChromeDriver version compatible with your Chrome version
+### 2. ChromeDriver Version Lookup
+- Queries the official [Chrome for Testing API](https://googlechromelabs.github.io/chrome-for-testing/)
+- Finds the latest compatible ChromeDriver version for your Chrome major version
+- Ensures ChromeDriver downloads are available for the target version
 
-3. **Download and Installation**:
-   - Downloads the appropriate Windows 32-bit ChromeDriver
-   - Extracts to the application directory
-   - Handles file locks by terminating blocking processes
+### 3. Smart Download and Installation
+- Downloads the appropriate Windows 32-bit ChromeDriver package
+- Extracts ChromeDriver to the application directory
+- Handles file locks by safely terminating blocking processes using Sysinternals Handle tool
+- Includes retry logic and proper cleanup
 
 ## 📁 File Structure
 
 ```
 GetLatestChromeDriver/
-├── GetLatestChromeDriver.sln          # Solution file
-├── GetLatestChromeDriver/
-│   ├── GetLatestChromeDriver.csproj   # Project file
-│   ├── Program.cs                     # Main application logic
-│   ├── Handle.zip                     # Sysinternals Handle tool (for process management)
-│   └── Properties/
-└── README.md                          # This file
+├── 📄 README.md                           # This documentation
+├── 📄 LICENSE                             # MIT License
+├── 📄 GetLatestChromeDriver.sln           # Visual Studio Solution
+├── 📂 .github/workflows/                  # GitHub Actions CI/CD
+│   └── 📄 codeql-analysis.yml
+├── 📂 GetLatestChromeDriver/               # Main project
+│   ├── 📄 GetLatestChromeDriver.csproj    # Project configuration
+│   ├── 📄 Program.cs                      # Main application logic
+│   ├── 📦 Handle.zip                      # Sysinternals Handle tool
+│   └── 📂 Properties/                     # Assembly properties
+└── 📂 bin/Debug/net8.0/                   # Build output (after compilation)
 ```
 
 ## 🛡️ Error Handling
 
-The application includes comprehensive error handling for common scenarios:
+The application includes comprehensive error handling for various scenarios:
 
-- Chrome not installed or not detectable
-- Network connectivity issues
-- File permission problems
-- Invalid or unsupported Chrome versions
-- ChromeDriver API unavailability
+| Scenario | Handling |
+|----------|----------|
+| 🚫 Chrome not installed | Clear error message with installation guidance |
+| 🌐 Network connectivity issues | Timeout protection and retry suggestions |
+| 🔒 File permission problems | Automatic process termination with Handle tool |
+| ❌ Invalid Chrome versions | Fallback version detection methods |
+| 🔧 ChromeDriver API unavailable | Graceful degradation with helpful error messages |
+| ⚠️ Process conflicts | Smart process management and cleanup |
 
 ## 🔄 Why Use This Tool?
 
-- **Automation**: No manual ChromeDriver version checking and downloading
-- **Compatibility**: Always gets the correct ChromeDriver version for your Chrome
-- **Selenium Testing**: Essential for automated browser testing with Selenium WebDriver
-- **CI/CD Integration**: Can be integrated into build pipelines to ensure compatible drivers
+### For Developers
+- **⏱️ Time Saving**: No manual ChromeDriver version checking and downloading
+- **🎯 Always Compatible**: Guarantees the correct ChromeDriver version for your Chrome installation
+- **🧪 Testing Ready**: Essential for automated browser testing with Selenium WebDriver
+- **🔄 CI/CD Friendly**: Perfect for build pipelines and automated deployment processes
+
+### For Teams
+- **📊 Consistency**: Ensures all team members use compatible ChromeDriver versions
+- **🚀 Productivity**: Eliminates ChromeDriver version mismatch issues
+- **🛡️ Reliability**: Reduces test failures due to driver incompatibility
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome! Here's how you can help:
+
+1. **🍴 Fork** the repository
+2. **🌿 Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **💻 Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **📤 Push** to the branch (`git push origin feature/amazing-feature`)
+5. **🔀 Open** a Pull Request
+
+### Development Guidelines
+- Follow existing code style and patterns
+- Add unit tests for new functionality
+- Update documentation for any changes
+- Ensure all tests pass before submitting
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+<details>
+<summary><strong>🔍 "Could not detect Chrome version"</strong></summary>
 
-**"Could not detect Chrome version"**
-- Ensure Google Chrome is installed
+**Possible Solutions:**
+- Ensure Google Chrome is installed and up to date
 - Check if Chrome is installed in a non-standard location
-- Run as Administrator if registry access is denied
+- Run the application as Administrator for registry access
+- Verify Chrome is not running in sandboxed mode
+</details>
 
-**"Could not find compatible ChromeDriver"**
+<details>
+<summary><strong>🌐 "Could not find compatible ChromeDriver"</strong></summary>
+
+**Possible Solutions:**
 - Check your internet connection
-- Verify that your Chrome version is supported
-- The Chrome for Testing API might be temporarily unavailable
+- Verify your Chrome version is supported (version 70+)
+- Try running again later (Chrome for Testing API might be temporarily unavailable)
+- Use `--verbose` flag for detailed error information
+</details>
 
-**"Access denied" errors**
+<details>
+<summary><strong>🔒 "Access denied" errors</strong></summary>
+
+**Possible Solutions:**
 - Run the application as Administrator
-- Ensure no other applications are using ChromeDriver
-- Check antivirus software isn't blocking the download
+- Close all Chrome and ChromeDriver instances
+- Check if antivirus software is blocking file operations
+- Ensure the target directory is writable
+</details>
+
+<details>
+<summary><strong>⏱️ Application hangs or times out</strong></summary>
+
+**Possible Solutions:**
+- Check your internet connection stability
+- Verify firewall/proxy settings allow HTTPS connections
+- Try running with `--verbose` for detailed progress information
+- Restart the application if it appears frozen
+</details>
 
 ## 🔗 Related Links
 
-- [ChromeDriver Documentation](https://chromedriver.chromium.org/)
-- [Chrome for Testing API](https://googlechromelabs.github.io/chrome-for-testing/)
-- [Selenium WebDriver](https://selenium.dev/documentation/webdriver/)
+- 📚 [ChromeDriver Documentation](https://chromedriver.chromium.org/)
+- 🧪 [Chrome for Testing API](https://googlechromelabs.github.io/chrome-for-testing/)
+- 🕷️ [Selenium WebDriver Documentation](https://selenium.dev/documentation/webdriver/)
+- 🔧 [.NET 8 Documentation](https://docs.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8)
+- 🛠️ [Sysinternals Handle Tool](https://docs.microsoft.com/en-us/sysinternals/downloads/handle)
+
+## 📊 Version History
+
+| Version | Release Date | Changes |
+|---------|--------------|---------|
+| 1.1.0 | 2025-01-12 | Improved error handling, async optimizations, better logging |
+| 1.0.0 | 2025-01-01 | Initial release with basic functionality |
 
 ---
 
-**Note**: This tool is specifically designed for Windows environments. For cross-platform ChromeDriver management, consider using package managers like npm's `chromedriver` package or similar tools for your specific platform.
+<div align="center">
+
+**⭐ Star this repository if it helped you!**
+
+Made with ❤️ by [guberm](https://github.com/guberm)
+
+</div>
